@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Days Since Severe Updated</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Syncopate:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #ff71ce;
+      --hotpink: #ff3da8;
+      --cyan: #01cdfe;
+      --purple: #d966ff;
+      --lavender: #e8b4ff;
+      --yellow: #fffb96;
+      --dark: #1a0025;
+      --card-bg: rgba(30,0,45,0.68);
+      --glow-pink: rgba(255,113,206,0.65);
+      --glow-cyan: rgba(1,205,254,0.5);
+      --glow-purple: rgba(217,102,255,0.55);
+      --grid: rgba(255,113,206,0.22);
+    }
+
+    * {
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+      background: var(--dark);
+      color: #fff;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .extra-box.full {
+    width: 100%;
+    }
+
+    #detailedTime {
+      font-size: 1.3rem;
+      line-height: 1.4;
+    }
+
+    #stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(1px 1px at 12% 8%, rgba(255,255,255,.9) 0%, transparent 100%),
+        radial-gradient(1px 1px at 38% 4%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 65% 18%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 7%, rgba(255,255,255,.5) 0%, transparent 100%);
+    }
+
+    #grid-floor {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 42vh;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #grid-inner {
+      position: absolute;
+      inset: -60% -300%;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 55px 55px;
+      transform: rotateX(78deg) translateY(-5%);
+      transform-origin: center bottom;
+      animation: gridMove 5s linear infinite;
+    }
+
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to { background-position: 0 55px; }
+    }
+
+    #grid-fade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, var(--dark) 0%, transparent 40%, transparent 70%, var(--dark) 100%);
+    }
+
+    #sun {
+      position: fixed;
+      bottom: 36vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 170px;
+      height: 85px;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #sun::before {
+      content: '';
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffe4f5 0%, #ff9de2 30%, #ff3da8 60%, #c200fb 100%);
+      box-shadow: 0 0 50px rgba(255,61,168,.7);
+    }
+
+    #scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,.06) 3px,
+        rgba(0,0,0,.06) 4px
+      );
+    }
+
+    .banner-wrap {
+      position: relative;
+      width: 100%;
+      height: 170px;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .banner-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 60%;
+      filter: brightness(.55) saturate(1.1) hue-rotate(300deg);
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom,
+      rgba(26,0,37,.1) 0%,
+      rgba(26,0,37,.45) 60%,
+      var(--dark) 100%);
+    }
+
+    .banner-identity {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .server-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--pink);
+      box-shadow: 0 0 14px var(--glow-pink);
+    }
+
+    .server-name {
+      font-family: 'Syncopate', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: .12em;
+      background: linear-gradient(90deg, #ffb3e6, var(--pink), var(--lavender));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .main {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 10px 20px 20px;
+      text-align: center;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--pink);
+      border-radius: 100px;
+      padding: 5px 18px;
+      font-size: .68rem;
+      letter-spacing: .15em;
+      color: var(--pink);
+      margin-bottom: 20px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--pink);
+      animation: blink 1.6s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%,100% { opacity:1 }
+      50% { opacity:.25 }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,113,206,.28);
+      border-radius: 4px;
+      padding: 24px 20px;
+      backdrop-filter: blur(14px);
+    }
+
+    .card-label {
+      font-size: .67rem;
+      letter-spacing: .28em;
+      color: var(--lavender);
+      margin-bottom: 8px;
+    }
+
+    .counter-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .counter-ghost {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      font-family: 'VT323', monospace;
+      font-size: clamp(4.5rem, 14vw, 7rem);
+      line-height: 1;
+    }
+
+    .counter-ghost.r {
+      color: rgba(255,80,180,.2);
+      transform: translateX(4px);
+    }
+
+    .counter-ghost.b {
+      color: rgba(217,102,255,.2);
+      transform: translateX(-4px);
+    }
+
+    #counter {
+      font-family: 'VT323', monospace;
+      font-size: clamp(4.5rem, 14vw, 7rem);
+      line-height: 1;
+      color: #ffd6f0;
+      text-shadow:
+        0 0 20px rgba(255,180,230,.9),
+        0 0 50px rgba(255,113,206,.5);
+    }
+
+    .days-label {
+      font-family: 'Syncopate', sans-serif;
+      font-size: .7rem;
+      letter-spacing: .45em;
+      color: var(--pink);
+      margin-top: 2px;
+      margin-bottom: 18px;
+    }
+
+    .extra-time-row {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .extra-box {
+      min-width: 110px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,113,206,.25);
+      background: rgba(255,255,255,.03);
+      backdrop-filter: blur(6px);
+      
+    }
+
+    .extra-time-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .extra-box {
+      min-width: 0;
+      padding: 10px 8px;
+    }
+
+    .extra-value {
+      font-size: 1.7rem;
+    }
+
+    .extra-label {
+      font-size: .5rem;
+    }
+
+    @media (max-width: 700px) {
+      .extra-time-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .extra-value {
+      font-family: 'VT323', monospace;
+      font-size: 2rem;
+      color: #ffd6f0;
+    }
+
+    .extra-label {
+      font-size: .55rem;
+      letter-spacing: .2em;
+      color: rgba(255,255,255,.45);
+      margin-top: 2px;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 16px 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,113,206,.3),
+        transparent
+      );
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .stat-item {
+      flex: 1;
+    }
+
+    .stat-val {
+      font-family: 'VT323', monospace;
+      font-size: 1.4rem;
+      color: var(--lavender);
+    }
+
+    .stat-key {
+      font-size: .55rem;
+      letter-spacing: .16em;
+      color: rgba(255,255,255,.35);
+      text-transform: uppercase;
+    }
+
+    .stat-sep {
+      width: 1px;
+      background: rgba(255,113,206,.2);
+      margin: 0 16px;
+    }
+
+    .meme {
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      letter-spacing: .1em;
+      color: rgba(255,179,230,.6);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="grid-floor">
+  <div id="grid-inner"></div>
+  <div id="grid-fade"></div>
+</div>
+
+<div id="sun"></div>
+<div id="scanlines"></div>
+
+<div class="banner-wrap">
+  <img class="banner-img"
+       src="https://cdn.discordapp.com/banners/876072383033798667/d8786b0aa7717e02e2b57242db7c6f75.webp?size=600">
+
+  <div class="banner-overlay"></div>
+
+  <div class="banner-identity">
+    <img class="server-icon"
+         src="https://cdn.discordapp.com/icons/876072383033798667/4e80cdfbaf0045d1416b1631a22d597d.webp?size=128&quality=lossless">
+
+    <div class="server-name">SEVERE EXTERNAL</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="status-pill">
+    <div class="status-dot"></div>
+    <span id="liveStatus">CALCULATING SUFFERING...</span>
+  </div>
+
+  <div class="card">
+
+    <div class="card-label">
+      ▸ DAYS SINCE SEVERE LAST UPDATED ◂
+    </div>
+
+    <div class="counter-wrap">
+      <div class="counter-ghost r" id="ghostR">0</div>
+      <div class="counter-ghost b" id="ghostB">0</div>
+      <div id="counter">0</div>
+    </div>
+
+    <div class="days-label">D A Y S</div>
+
+    <div class="extra-time-row">
+
+      <div class="extra-box">
+        <div class="extra-value" id="weeksCount">0</div>
+        <div class="extra-label">WEEKS</div>
+      </div>
+
+      <div class="extra-box">
+        <div class="extra-value" id="daysCount">0</div>
+        <div class="extra-label">DAYS</div>
+      </div>
+
+      <div class="extra-box">
+        <div class="extra-value" id="hoursCount">0</div>
+        <div class="extra-label">HOURS</div>
+      </div>
+
+      <div class="extra-box">
+        <div class="extra-value" id="minutesCount">0</div>
+        <div class="extra-label">MINUTES</div>
+      </div>
+
+      <div class="extra-box">
+        <div class="extra-value" id="secondsCount">0</div>
+        <div class="extra-label">SECONDS</div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="stat-row">
+
+      <div class="stat-item">
+        <div class="stat-val" id="lastDate">—</div>
+        <div class="stat-key">last update</div>
+      </div>
+
+      <div class="stat-sep"></div>
+
+      <div class="stat-item">
+        <div class="stat-val" id="prevGap">—</div>
+        <div class="stat-key">previous update gap</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="meme" id="meme"></div>
+
+</div>
+
+<script>
+
+  const LAST_UPDATE = "2025-01-01";
+  const PREV_UPDATE = "2024-06-15";
+
+  const MEMES = [
+    "hi blackwoods"
+  ];
+
+  function daysBetween(a, b) {
+    return Math.floor((b - a) / 86400000);
+  }
+
+  function fmt(dateStr) {
+    return new Date(dateStr + "T12:00:00")
+      .toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      })
+      .toUpperCase();
+  }
+
+  function run() {
+
+    const last = new Date(LAST_UPDATE + "T12:00:00");
+    const prev = new Date(PREV_UPDATE + "T12:00:00");
+    const now  = new Date();
+
+    const daysSince = daysBetween(last, now);
+    const prevGap = daysBetween(prev, last);
+
+    const diffMs = now - last;
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+
+    const weeks = Math.floor(totalSeconds / (7 * 24 * 60 * 60));
+
+    const days = Math.floor(
+      (totalSeconds % (7 * 24 * 60 * 60)) / (24 * 60 * 60)
+    );
+
+    const hours = Math.floor(
+      (totalSeconds % (24 * 60 * 60)) / (60 * 60)
+    );
+
+    const minutes = Math.floor(
+      (totalSeconds % (60 * 60)) / 60
+    );
+
+    const seconds = totalSeconds % 60;
+
+    const n = String(daysSince);
+
+    document.getElementById("counter").textContent = n;
+    document.getElementById("ghostR").textContent = n;
+    document.getElementById("ghostB").textContent = n;
+
+    document.getElementById("weeksCount").textContent = weeks;
+    document.getElementById("daysCount").textContent = days;
+    document.getElementById("hoursCount").textContent = hours;
+    document.getElementById("minutesCount").textContent = minutes;
+    document.getElementById("secondsCount").textContent = seconds;
+
+    document.getElementById("lastDate").textContent = fmt(LAST_UPDATE);
+    document.getElementById("prevGap").textContent = prevGap + "D";
+
+    const s = document.getElementById("liveStatus");
+
+    if (daysSince < 7)
+      s.textContent = "ONE WEEK SINCE CARING";
+    else if (daysSince < 30)
+      s.textContent = "CERTIFIED SLOWPOKE DETECTED";
+    else
+      s.textContent = daysSince + " DAYS OF LEGIT PLAYING";
+
+    document.getElementById("meme").textContent =
+      MEMES[daysSince % MEMES.length];
+  }
+
+  run();
+
+  setInterval(run, 1000);
+
+</script>
+
+</body>
+</html>
